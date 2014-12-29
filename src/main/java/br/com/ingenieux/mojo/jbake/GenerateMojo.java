@@ -75,6 +75,8 @@ public class GenerateMojo extends AbstractMojo {
 
   protected void reRender() throws MojoExecutionException {
     try {
+      Orient.instance().startup();
+    	
       // TODO: At some point, reuse Oven
       Oven oven = new Oven(inputDirectory, outputDirectory, isClearCache);
 
