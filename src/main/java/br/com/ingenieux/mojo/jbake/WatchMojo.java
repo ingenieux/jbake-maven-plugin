@@ -30,7 +30,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 /**
  * Runs jbake on a folder while watching for changes
  */
-@Mojo(name = "watch", requiresDirectInvocation = true, requiresProject = false)
+@Mojo(name = "watch", requiresDirectInvocation = true, requiresProject = true)
 public class WatchMojo extends GenerateMojo {
 
   public void executeInternal() throws MojoExecutionException {
