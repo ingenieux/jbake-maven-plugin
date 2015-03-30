@@ -31,7 +31,7 @@ import net_alchim31_livereload.LRServer;
 /**
  * Runs jbake on a folder while watching and serving a folder with it
  */
-@Mojo(name = "inline", requiresDirectInvocation = true, requiresProject = false)
+@Mojo(name = "inline", requiresDirectInvocation = true, requiresProject = true)
 public class InlineMojo extends WatchMojo {
 
   /**

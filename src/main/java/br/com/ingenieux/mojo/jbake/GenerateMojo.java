@@ -17,11 +17,13 @@ package br.com.ingenieux.mojo.jbake;
  */
 
 import com.orientechnologies.orient.core.Orient;
-
+import org.apache.commons.configuration.MapConfiguration;
+import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.jbake.app.Oven;
 
 import java.io.File;
@@ -29,65 +31,80 @@ import java.io.File;
 /**
  * Runs jbake on a folder
  */
-@Mojo(name = "generate", requiresProject = false)
+@Mojo(name = "generate", requiresProject = true)
 public class GenerateMojo extends AbstractMojo {
 
-  /**
-   * Location of the Output Directory.
-   */
-  @Parameter(property = "jbake.outputDirectory",
-             defaultValue = "${project.build.directory}/${project.build.finalName}",
-             required = true)
-  protected File outputDirectory;
+    @Parameter(property = "project", required = true)
+    protected MavenProject project;
 
-  /**
-   * Location of the Output Directory.
-   */
-  @Parameter(property = "jbake.inputDirectory", defaultValue = "${project.basedir}/src/main/jbake",
-             required = true)
-  protected File inputDirectory;
+    /**
+     * Location of the Output Directory.
+     */
+    @Parameter(property = "jbake.outputDirectory",
+            defaultValue = "${project.build.directory}/${project.build.finalName}",
+            required = true)
+    protected File outputDirectory;
 
-  /**
-   * Set if cache is present or clear
-   */
-  @Parameter(property = "jbake.isClearCache", defaultValue = "false", required = true)
-  protected boolean isClearCache;
+    /**
+     * Location of the Output Directory.
+     */
+    @Parameter(property = "jbake.inputDirectory", defaultValue = "${project.basedir}/src/main/jbake",
+            required = true)
+    protected File inputDirectory;
 
-  public final void execute() throws MojoExecutionException {
-    try {
-      executeInternal();
-    } finally {
-      closeQuietly();
+    /**
+     * Set if cache is present or clear
+     */
+    @Parameter(property = "jbake.isClearCache", defaultValue = "false", required = true)
+    protected boolean isClearCache;
+
+    /**
+     * Mix with system configuration or not.
+     */
+    @Parameter(property = "jbake.useSystemConfig", defaultValue = "false", required = true)
+    protected boolean useSystemConfig;
+
+
+    public final void execute() throws MojoExecutionException {
+        try {
+            executeInternal();
+        } finally {
+            closeQuietly();
+        }
     }
-  }
 
-  protected final void closeQuietly() {
-    try {
-      Orient.instance().shutdown();
-    } catch (Exception e) {
-      getLog().warn("Oops", e);
+    protected final void closeQuietly() {
+        try {
+            Orient.instance().shutdown();
+        } catch (Exception e) {
+            getLog().warn("Oops", e);
+        }
     }
-  }
 
-  protected void executeInternal() throws MojoExecutionException {
-    reRender();
-  }
-
-  protected void reRender() throws MojoExecutionException {
-    try {
-      // TODO: Smells bad. A lot
-      Orient.instance().startup();
-
-      // TODO: At some point, reuse Oven
-      Oven oven = new Oven(inputDirectory, outputDirectory, isClearCache);
-
-      oven.setupPaths();
-
-      oven.bake();
-    } catch (Exception e) {
-      getLog().info("Oops", e);
-
-      throw new MojoExecutionException("Failure when running: ", e);
+    protected void executeInternal() throws MojoExecutionException {
+        reRender();
     }
-  }
+
+    protected void reRender() throws MojoExecutionException {
+        try {
+            // TODO: Smells bad. A lot
+            Orient.instance().startup();
+
+            // TODO: At some point, reuse Oven
+            Oven oven = new Oven(inputDirectory, outputDirectory, isClearCache);
+
+            if (useSystemConfig) {
+                oven.getConfig().addConfiguration(new MapConfiguration(project.getProperties()));
+                oven.getConfig().addConfiguration(new SystemConfiguration());
+            }
+
+            oven.setupPaths();
+
+            oven.bake();
+        } catch (Exception e) {
+            getLog().info("Oops", e);
+
+            throw new MojoExecutionException("Failure when running: ", e);
+        }
+    }
 }
