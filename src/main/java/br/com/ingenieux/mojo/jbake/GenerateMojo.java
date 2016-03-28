@@ -18,10 +18,15 @@ package br.com.ingenieux.mojo.jbake;
 
 import com.orientechnologies.orient.core.Orient;
 
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.MapConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.jbake.app.ConfigUtil;
+import org.jbake.app.JBakeException;
 import org.jbake.app.Oven;
 
 import java.io.File;
@@ -31,7 +36,6 @@ import java.io.File;
  */
 @Mojo(name = "generate", requiresProject = false)
 public class GenerateMojo extends AbstractMojo {
-
   /**
    * Location of the Output Directory.
    */
@@ -79,7 +83,7 @@ public class GenerateMojo extends AbstractMojo {
       Orient.instance().startup();
 
       // TODO: At some point, reuse Oven
-      Oven oven = new Oven(inputDirectory, outputDirectory, isClearCache);
+      Oven oven = new Oven(inputDirectory, outputDirectory, createConfiguration(), isClearCache);
 
       oven.setupPaths();
 
@@ -90,4 +94,15 @@ public class GenerateMojo extends AbstractMojo {
       throw new MojoExecutionException("Failure when running: ", e);
     }
   }
+
+  protected CompositeConfiguration createConfiguration() throws ConfigurationException {
+    final CompositeConfiguration config = new CompositeConfiguration();
+
+    config.addConfiguration(ConfigUtil.load(inputDirectory));
+
+    config.addConfiguration(new MapConfiguration(this.getPluginContext()));
+
+    return config;
+  }
+
 }
